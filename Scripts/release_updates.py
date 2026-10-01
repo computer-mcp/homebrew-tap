@@ -179,6 +179,9 @@ def stage(directory):
         name, kind = candidate["name"], candidate["kind"]
         version_key(candidate["version"])
         require((name, kind) in {( "apple-cli", "formula"), ("computer-mcp", "cask")}, "Unreviewed distribution")
+        require(re.fullmatch(r"[a-z][a-z0-9_]*", candidate["macos_symbol"]), "Invalid macOS symbol")
+        floor = subprocess.check_output(["brew", "ruby", "-e", 'require "macos_version"; puts MacOSVersion::SYMBOLS.fetch(ARGV.fetch(0).to_sym)', "--", candidate["macos_symbol"]], text=True, timeout=30).strip()
+        require(floor.split(".")[0] == candidate["minimum_macos"], "Homebrew platform floor does not match its reviewed policy")
         asset = asset_names(name, candidate["version"])[0]
         record = candidate["assets"][asset]
         destination = ROOT / ("Formula" if kind == "formula" else "Casks") / f"{name}.rb"
