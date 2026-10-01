@@ -7,7 +7,7 @@ cask "computer-mcp" do
   desc "Governed local MCP gateway for ChatGPT"
   homepage "https://github.com/computer-mcp/computer-mcp"
 
-  depends_on macos: ">= :@MACOS_SYMBOL@"
+  depends_on macos: :@MACOS_SYMBOL@
 
   app "Computer MCP.app"
 end
