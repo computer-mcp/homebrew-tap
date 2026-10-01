@@ -67,6 +67,7 @@ jobs:
         run: |
           brew test-bot --only-formulae --build-from-source --skip-dependents --testing-formulae=computer-mcp/tap/apple-cli --tap=computer-mcp/tap
           brew install --formula computer-mcp/tap/apple-cli
+          brew test --verbose computer-mcp/tap/apple-cli
           python3 -B Scripts/verify_installation.py apple-cli
       - name: Test Computer MCP cask
         if: hashFiles('Casks/computer-mcp.rb') != ''

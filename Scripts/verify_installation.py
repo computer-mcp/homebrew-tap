@@ -23,8 +23,11 @@ def verify_cli(metadata):
         relative = Path(record["path"])
         require(len(relative.parts) == 2 and relative.parts[0] == "bin", "Unexpected executable inventory")
         file = prefix / "libexec" / relative
+        checksum = hashlib.sha256()
         with file.open("rb") as stream:
-            require(hashlib.file_digest(stream, "sha256").hexdigest() == record["sha256"], "Homebrew changed an accepted executable")
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                checksum.update(chunk)
+        require(checksum.hexdigest() == record["sha256"], "Homebrew changed an accepted executable")
         subprocess.run(["codesign", "--verify", "--strict", str(file)], check=True, timeout=30)
     for name in ("apple", "apple-cli-mcp"):
         executable = prefix / "bin" / name
