@@ -1,0 +1,49 @@
+{
+  "acceptance_run": "https://github.com/computer-mcp/apple-cli/actions/runs/36892691006",
+  "allow_prereleases": true,
+  "assets": {
+    "apple-cli-0.1.0-alpha.3-macos-arm64.provenance.json": {
+      "sha256": "435c3081d8f3f440361ef380e720a9fb6a9403e8508ea075c4c51c7df564d70e",
+      "size": 18043,
+      "url": "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.3/apple-cli-0.1.0-alpha.3-macos-arm64.provenance.json"
+    },
+    "apple-cli-0.1.0-alpha.3-macos-arm64.tar.gz": {
+      "sha256": "720f714ba4bcc22217d32eb2a3012eb4b72b6694a885f07ee0eaa753a64afb07",
+      "size": 16510953,
+      "url": "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.3/apple-cli-0.1.0-alpha.3-macos-arm64.tar.gz"
+    },
+    "apple-cli-0.1.0-alpha.3-macos-arm64.tar.gz.sha256": {
+      "sha256": "8f9583a8e3aa26ed2f9987235e0e72d0aadb3690ecdbee5dd59e39210c50b670",
+      "size": 109,
+      "url": "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.3/apple-cli-0.1.0-alpha.3-macos-arm64.tar.gz.sha256"
+    },
+    "apple-cli-0.1.0-alpha.3-macos-arm64.verification.json": {
+      "sha256": "adf20aa1c46b907de6d7def2f27d1a665029c5159ce9066fe2d9a004d744ecf3",
+      "size": 1685,
+      "url": "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.3/apple-cli-0.1.0-alpha.3-macos-arm64.verification.json"
+    }
+  },
+  "binaries": [
+    {
+      "path": "bin/apple",
+      "sha256": "06521741d78d09eb990db76cd6472f9463dbe4e8fd9fd5a4f242d9094ce5a170"
+    },
+    {
+      "path": "bin/apple-cli-mcp",
+      "sha256": "f9ba453f4aca11bab21893d6aa283631201b74780d693e2443ff95349e4b0798"
+    },
+    {
+      "path": "bin/libswiftCompatibilitySpan.dylib",
+      "sha256": "e633f9014ad3b49f5f2f7a1c178471620f7e17b855899c3552832d7806d41cd9"
+    }
+  ],
+  "kind": "formula",
+  "macos_symbol": "golden_gate",
+  "minimum_macos": "27",
+  "name": "apple-cli",
+  "release_id": 401169966,
+  "repository": "computer-mcp/apple-cli",
+  "source_commit": "f362fcc35a3e3eaf93102f19600a8d17d18e6db8",
+  "tag": "v0.1.0-alpha.3",
+  "version": "0.1.0-alpha.3"
+}
