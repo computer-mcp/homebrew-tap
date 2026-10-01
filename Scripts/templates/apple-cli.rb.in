@@ -2,12 +2,11 @@ class AppleCli < Formula
   desc "Automate Apple apps using CLI and MCP"
   homepage "https://github.com/computer-mcp/apple-cli"
   url "@URL@"
-  version "@VERSION@"
   sha256 "@SHA256@"
   license "Apache-2.0"
 
-  depends_on macos: :@MACOS_SYMBOL@
   depends_on arch: :arm64
+  depends_on macos: :@MACOS_SYMBOL@
 
   # Preserve the accepted executables and their bundled runtime signatures.
   skip_clean "libexec"
