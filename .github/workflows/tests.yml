@@ -2,50 +2,75 @@ name: brew test-bot
 
 on:
   push:
-    branches:
-      - main
+    branches: [master]
   pull_request:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      candidate-artifact:
+        description: Accepted distribution files to test before publication
+        type: string
+        default: ""
+
+permissions:
+  actions: read
+  checks: read
+  contents: read
+  pull-requests: read
 
 jobs:
   test-bot:
     strategy:
+      fail-fast: false
       matrix:
-        os: [ macos-15-intel, macos-26 ]
-        include:
-          - os: ubuntu-latest
-            container: ghcr.io/homebrew/brew:main
+        os: [macos-15-intel, xcode-27]
     runs-on: ${{ matrix.os }}
-    container: ${{ matrix.container }}
-    permissions:
-      actions: read
-      checks: read
-      contents: read
-      pull-requests: read
+    timeout-minutes: 45
+    env:
+      HOMEBREW_NO_ENV_HINTS: 1
     steps:
       - name: Set up Homebrew
         id: set-up-homebrew
-        uses: Homebrew/actions/setup-homebrew@main
+        uses: Homebrew/actions/setup-homebrew@e99025eb970cfa124b8284a35463d87426917478 # main
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
+          token: ${{ github.token }}
       - name: Cache Homebrew Bundler RubyGems
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
           key: ${{ matrix.os }}-rubygems-${{ steps.set-up-homebrew.outputs.gems-hash }}
-          restore-keys: ${{ matrix.os }}-rubygems-
-
       - run: brew test-bot --only-cleanup-before
-
       - run: brew test-bot --only-setup
-
-      - run: brew test-bot --only-tap-syntax
-      - run: brew test-bot --only-formulae
-        if: github.event_name == 'pull_request'
-
-      - name: Upload bottles as artifact
-        if: always() && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v4
+      - name: Apply distribution candidate
+        if: inputs.candidate-artifact != ''
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          name: bottles_${{ matrix.os }}
-          path: '*.bottle.*'
+          name: ${{ inputs.candidate-artifact }}
+          path: .
+      - name: Commit candidate locally for Homebrew checks
+        if: inputs.candidate-artifact != ''
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          for package_directory in Formula Casks Metadata; do
+            if [[ -d "$package_directory" ]]; then git add -- "$package_directory"; fi
+          done
+          if ! git diff --cached --quiet; then git commit -m 'Stage distribution candidate'; fi
+      - run: python3 -B -m unittest discover -s Tests
+      - name: Trust reviewed packages
+        run: |
+          if [[ -f Formula/apple-cli.rb ]]; then brew trust --formula computer-mcp/tap/apple-cli; fi
+          if [[ -f Casks/computer-mcp.rb ]]; then brew trust --cask computer-mcp/tap/computer-mcp; fi
+      - run: brew test-bot --only-tap-syntax --tap=computer-mcp/tap
+      - name: Test Apple CLI formula
+        if: matrix.os == 'xcode-27' && hashFiles('Formula/apple-cli.rb') != ''
+        run: |
+          brew test-bot --only-formulae --build-from-source --skip-dependents --testing-formulae=computer-mcp/tap/apple-cli --tap=computer-mcp/tap
+          brew install --formula computer-mcp/tap/apple-cli
+          python3 -B Scripts/verify_installation.py apple-cli
+      - name: Test Computer MCP cask
+        if: hashFiles('Casks/computer-mcp.rb') != ''
+        run: |
+          brew audit --cask --strict --online computer-mcp/tap/computer-mcp
+          brew install --cask --appdir="$RUNNER_TEMP/homebrew-apps" computer-mcp/tap/computer-mcp
+          python3 -B Scripts/verify_installation.py computer-mcp --appdir "$RUNNER_TEMP/homebrew-apps"

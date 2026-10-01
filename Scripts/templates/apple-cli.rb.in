@@ -1,0 +1,28 @@
+class AppleCli < Formula
+  desc "Automate Apple apps using CLI and MCP"
+  homepage "https://github.com/computer-mcp/apple-cli"
+  url "@URL@"
+  version "@VERSION@"
+  sha256 "@SHA256@"
+  license "Apache-2.0"
+
+  depends_on macos: :@MACOS_SYMBOL@
+  depends_on arch: :arm64
+
+  # Preserve the accepted executables and their bundled runtime signatures.
+  skip_clean "libexec"
+
+  def install
+    libexec.install Dir["*"]
+    bin.install_symlink libexec/"bin/apple", libexec/"bin/apple-cli-mcp"
+  end
+
+  test do
+    assert_equal version.to_s, shell_output("#{bin}/apple --version").strip
+    assert_equal version.to_s, shell_output("#{bin}/apple-cli-mcp --version").strip
+    assert_match "notes", shell_output("#{bin}/apple --help")
+    preview = JSON.parse(shell_output("#{bin}/apple notifications preview --title Homebrew --body test --json"))
+    assert_equal true, preview["ok"]
+    assert_equal false, preview.dig("data", "externalAction")
+  end
+end

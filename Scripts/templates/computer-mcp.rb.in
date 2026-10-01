@@ -1,0 +1,13 @@
+cask "computer-mcp" do
+  version "@VERSION@"
+  sha256 "@SHA256@"
+
+  url "https://github.com/computer-mcp/computer-mcp/releases/download/v#{version}/Computer-MCP-#{version}-universal.dmg"
+  name "Computer MCP"
+  desc "Governed local MCP gateway for ChatGPT"
+  homepage "https://github.com/computer-mcp/computer-mcp"
+
+  depends_on macos: ">= :@MACOS_SYMBOL@"
+
+  app "Computer MCP.app"
+end
