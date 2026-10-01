@@ -93,19 +93,30 @@ def asset_names(name, version):
     raise ValueError("No acceptance contract for this product")
 
 
+def accepted_release_run(repository, ci, commit):
+    require(ci["repository"] == repository, "Acceptance belongs to another repository")
+    require(re.fullmatch(r"[1-9][0-9]*", str(ci["run_id"]), re.ASCII), "Invalid acceptance run")
+    require(re.fullmatch(r"[1-9][0-9]*", str(ci["run_attempt"]), re.ASCII), "Invalid acceptance attempt")
+    endpoint = f"repos/{repository}/actions/runs/{ci['run_id']}"
+    run = api(endpoint)
+    require(run["status"] == "completed" and run["conclusion"] == "success", "Release workflow is not accepted")
+    require(run["head_sha"] == commit and run["path"] == ".github/workflows/release.yml", "Acceptance workflow identity mismatch")
+    require(run["run_attempt"] >= int(ci["run_attempt"]), "Acceptance attempt mismatch")
+    require(ci["run_url"] == run["html_url"], "Acceptance URL mismatch")
+    attempt = api(f"{endpoint}/attempts/{ci['run_attempt']}")
+    require(attempt["head_sha"] == commit and attempt["path"] == run["path"] and str(attempt["run_attempt"]) == str(ci["run_attempt"]), "Acceptance build attempt identity mismatch")
+    jobs = api(f"{endpoint}/attempts/{ci['run_attempt']}/jobs?per_page=100")["jobs"]
+    builds = [job for job in jobs if job["name"] == "build"]
+    require(len(builds) == 1 and builds[0]["status"] == "completed" and builds[0]["conclusion"] == "success", "Archive build attempt is not accepted")
+    return run
+
+
 def validate_apple_cli(candidate, directory):
     repository, version, tag = candidate["repository"], candidate["version"], candidate["tag"]
     package = f"apple-cli-{version}-macos-arm64"
     manifest = json.loads((directory / (package + ".provenance.json")).read_text())
     receipt = json.loads((directory / (package + ".verification.json")).read_text())
-    require(receipt["ci"]["repository"] == repository, "Acceptance belongs to another repository")
-    require(str(receipt["ci"]["run_id"]).isdigit(), "Invalid acceptance run")
-    require(str(receipt["ci"]["run_attempt"]).isdigit(), "Invalid acceptance attempt")
-    run = api(f"repos/{repository}/actions/runs/{receipt['ci']['run_id']}/attempts/{receipt['ci']['run_attempt']}")
-    require(run["status"] == "completed" and run["conclusion"] == "success", "Release workflow is not accepted")
-    require(run["head_sha"] == candidate["source_commit"] and run["path"] == ".github/workflows/release.yml", "Acceptance workflow identity mismatch")
-    require(str(run["run_attempt"]) == receipt["ci"]["run_attempt"], "Acceptance attempt mismatch")
-    require(receipt["ci"]["run_url"] == run["html_url"], "Acceptance URL mismatch")
+    run = accepted_release_run(repository, receipt["ci"], candidate["source_commit"])
     require(receipt["tested_macos"].split(".")[0] == candidate["minimum_macos"], "Review the new tested platform before updating the formula")
     with tempfile.TemporaryDirectory(prefix="tap-release-source-") as temporary:
         source = Path(temporary) / "source"

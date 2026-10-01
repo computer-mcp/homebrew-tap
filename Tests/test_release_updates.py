@@ -2,6 +2,7 @@ import copy
 import importlib.util
 from pathlib import Path
 import unittest
+from unittest.mock import patch
 
 
 SPEC = importlib.util.spec_from_file_location("release_updates", Path(__file__).resolve().parents[1] / "Scripts/release_updates.py")
@@ -84,3 +85,62 @@ class AssetBoundaryTests(unittest.TestCase):
             self.release["assets"] = [{**self.asset, key: value}]
             with self.subTest(key=key, value=value), self.assertRaises(ValueError):
                 updates.asset_record("computer-mcp/apple-cli", self.release, self.asset["name"])
+
+
+class AcceptanceAttemptTests(unittest.TestCase):
+    def setUp(self):
+        self.repository = "computer-mcp/apple-cli"
+        self.commit = "a" * 40
+        self.ci = {"repository": self.repository, "run_id": "42", "run_attempt": "1",
+                   "run_url": f"https://github.com/{self.repository}/actions/runs/42"}
+        self.run = {"status": "completed", "conclusion": "success", "head_sha": self.commit,
+                    "path": ".github/workflows/release.yml", "run_attempt": 1, "html_url": self.ci["run_url"]}
+        self.attempt = copy.deepcopy(self.run)
+        self.jobs = {"jobs": [{"name": "build", "status": "completed", "conclusion": "success"}]}
+
+    def accepted(self):
+        with patch.object(updates, "api", side_effect=[self.run, self.attempt, self.jobs]):
+            return updates.accepted_release_run(self.repository, self.ci, self.commit)
+
+    def test_initial_success_requires_the_receipt_build_attempt(self):
+        self.assertEqual(self.accepted(), self.run)
+
+    def test_successful_publication_retry_can_reuse_accepted_build(self):
+        self.run["run_attempt"] = 2
+        self.attempt["conclusion"] = "failure"
+        self.assertEqual(self.accepted()["run_attempt"], 2)
+
+    def test_failed_or_running_publication_is_not_accepted(self):
+        for status, conclusion in (("completed", "failure"), ("in_progress", None)):
+            self.run.update(status=status, conclusion=conclusion)
+            with self.subTest(status=status), self.assertRaises(ValueError):
+                self.accepted()
+
+    def test_failed_missing_or_duplicate_build_is_not_accepted(self):
+        for jobs in ([], [{"name": "build", "status": "completed", "conclusion": "failure"}],
+                     [self.jobs["jobs"][0], self.jobs["jobs"][0]]):
+            with self.subTest(jobs=jobs), patch.object(updates, "api", side_effect=[self.run, self.attempt, {"jobs": jobs}]), self.assertRaises(ValueError):
+                updates.accepted_release_run(self.repository, self.ci, self.commit)
+
+    def test_publication_workflow_cannot_change_source_or_path(self):
+        for key, value in (("head_sha", "b" * 40), ("path", ".github/workflows/ci.yml")):
+            changed = {**self.run, key: value}
+            with self.subTest(key=key), patch.object(updates, "api", return_value=changed), self.assertRaises(ValueError):
+                updates.accepted_release_run(self.repository, self.ci, self.commit)
+
+    def test_build_attempt_identity_cannot_change(self):
+        for key, value in (("head_sha", "b" * 40), ("path", ".github/workflows/ci.yml"), ("run_attempt", 2)):
+            changed = {**self.attempt, key: value}
+            with self.subTest(key=key), patch.object(updates, "api", side_effect=[self.run, changed]), self.assertRaises(ValueError):
+                updates.accepted_release_run(self.repository, self.ci, self.commit)
+
+    def test_receipt_cannot_reference_an_attempt_after_publication(self):
+        self.ci["run_attempt"] = "2"
+        with self.assertRaises(ValueError):
+            self.accepted()
+
+    def test_malformed_receipt_is_rejected_before_network_access(self):
+        for key, value in (("repository", "other/apple-cli"), ("run_id", "0"), ("run_id", "４２"), ("run_attempt", "01"), ("run_attempt", "1/jobs")):
+            with self.subTest(key=key), patch.object(updates, "api") as request, self.assertRaises(ValueError):
+                updates.accepted_release_run(self.repository, {**self.ci, key: value}, self.commit)
+            request.assert_not_called()
