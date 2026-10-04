@@ -1,44 +1,44 @@
 {
   "allow_prereleases": false,
   "assets": {
-    "Computer-MCP-1.3.1-AppNotary.json": {
-      "sha256": "3eea27de769d3b3c6350fc67a66bd4e9bf200ab9f7ee064323de518388f153a1",
+    "Computer-MCP-1.3.2-AppNotary.json": {
+      "sha256": "3986c0efa97b0b9f89476ac38307aa1d6925afac66fb8cefd534ae5dc233661a",
       "size": 98,
-      "url": "https://github.com/computer-mcp/computer-mcp/releases/download/v1.3.1/Computer-MCP-1.3.1-AppNotary.json"
+      "url": "https://github.com/computer-mcp/computer-mcp/releases/download/v1.3.2/Computer-MCP-1.3.2-AppNotary.json"
     },
-    "Computer-MCP-1.3.1-DMGNotary.json": {
-      "sha256": "6345759b8933db640b81ed1388df1dae215b54e3b1745b1520696fdf4326f305",
+    "Computer-MCP-1.3.2-DMGNotary.json": {
+      "sha256": "91eb3fae466eef3e9256a78e2bae616c63c994031c789176af6f375871393356",
       "size": 98,
-      "url": "https://github.com/computer-mcp/computer-mcp/releases/download/v1.3.1/Computer-MCP-1.3.1-DMGNotary.json"
+      "url": "https://github.com/computer-mcp/computer-mcp/releases/download/v1.3.2/Computer-MCP-1.3.2-DMGNotary.json"
     },
-    "Computer-MCP-1.3.1-universal-ArtifactProvenance.json": {
-      "sha256": "2236b9fdeba6ed7641576274999beaeccd9a1cd9adb5b8a81503b4bffd3ff376",
+    "Computer-MCP-1.3.2-universal-ArtifactProvenance.json": {
+      "sha256": "29960895652e37a991110f44d1b2e010aa35bbb40e6e3355349a545485284f86",
       "size": 988,
-      "url": "https://github.com/computer-mcp/computer-mcp/releases/download/v1.3.1/Computer-MCP-1.3.1-universal-ArtifactProvenance.json"
+      "url": "https://github.com/computer-mcp/computer-mcp/releases/download/v1.3.2/Computer-MCP-1.3.2-universal-ArtifactProvenance.json"
     },
-    "Computer-MCP-1.3.1-universal.dmg": {
-      "sha256": "ece18ea8d0734323af9f2ccad07897c25d0c464199d72ccbd54ed6d841d2ce6b",
-      "size": 48377904,
-      "url": "https://github.com/computer-mcp/computer-mcp/releases/download/v1.3.1/Computer-MCP-1.3.1-universal.dmg"
+    "Computer-MCP-1.3.2-universal.dmg": {
+      "sha256": "b60df082bf597bef2168353e42cc568f8606434822ca820acc6a80cb0f909e02",
+      "size": 48469552,
+      "url": "https://github.com/computer-mcp/computer-mcp/releases/download/v1.3.2/Computer-MCP-1.3.2-universal.dmg"
     },
     "SHA256SUMS": {
-      "sha256": "79032c24a22a062ef845d106c2a762c20b9e469971f79ab30bd1cf4e27cfc64c",
+      "sha256": "fa5650c3934371e6991e78221d3233a0714dd66feb717b10a7eb2b0395c0f9b1",
       "size": 923,
-      "url": "https://github.com/computer-mcp/computer-mcp/releases/download/v1.3.1/SHA256SUMS"
+      "url": "https://github.com/computer-mcp/computer-mcp/releases/download/v1.3.2/SHA256SUMS"
     },
     "release.json": {
-      "sha256": "e63e6da0ec6da92f3a05a4bd83ec5c9f3bed2d6ea0679ec4d47cfcc179c3cfca",
+      "sha256": "0bb67694688bb96b7e623121bc2be4bdde6a93f1f6e8ff74ee0b80410d762828",
       "size": 321,
-      "url": "https://github.com/computer-mcp/computer-mcp/releases/download/v1.3.1/release.json"
+      "url": "https://github.com/computer-mcp/computer-mcp/releases/download/v1.3.2/release.json"
     }
   },
   "kind": "cask",
   "macos_symbol": "sonoma",
   "minimum_macos": "14",
   "name": "computer-mcp",
-  "release_id": 400953779,
+  "release_id": 401603694,
   "repository": "computer-mcp/computer-mcp",
-  "source_commit": "be9af945431d17c748d1a56c200e13bb38540827",
-  "tag": "v1.3.1",
-  "version": "1.3.1"
+  "source_commit": "721122dac28fb8473a5c035362cddc03941b1c23",
+  "tag": "v1.3.2",
+  "version": "1.3.2"
 }
