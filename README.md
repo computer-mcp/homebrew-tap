@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="Documentation/Brand/header-dark.png">
+  <img alt="Computer MCP — Homebrew Tap" src="Documentation/Brand/header-light.png">
+</picture>
+
 # Computer MCP Homebrew Tap
 
 The organization tap for Computer MCP formulae and casks.

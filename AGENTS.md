@@ -17,6 +17,10 @@ packages on ephemeral GitHub Actions runners. Keep local execution evidence in
 ignored `.agent/`. Keep machine paths, credentials and personal data out of
 committed files. The default branch is master.
 
+README headers and the social preview come from the organization `.github`
+repository through `.github/brand/brand.lock.json`. Update them only with that
+repository's `python3 Brand/brand.py sync`.
+
 Change master only through squash-merged pull requests with passing `test-bot`
 checks. Never push to master directly, merge by rebase, or bypass the ruleset.
 Automated distribution updates follow the same path.
