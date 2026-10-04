@@ -75,3 +75,5 @@ jobs:
           brew audit --cask --strict --online computer-mcp/tap/computer-mcp
           brew install --cask --appdir="$RUNNER_TEMP/homebrew-apps" computer-mcp/tap/computer-mcp
           python3 -B Scripts/verify_installation.py computer-mcp --appdir "$RUNNER_TEMP/homebrew-apps"
+  brand:
+    uses: computer-mcp/.github/.github/workflows/brand-check.yml@9b58c7b9823a808273c8a60d4676c6555b2bcaad # master

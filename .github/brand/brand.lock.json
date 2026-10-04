@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "authority": "https://github.com/computer-mcp/.github",
+  "revision": "9042c987ef8b3482f63e3a037ae0d0d2fdeffb9a7768c03295c9a6a6c5a43ae2",
+  "consumer": "homebrew-tap",
+  "files": {
+    "Documentation/Brand/header-light.png": "bf460d272c93a344a75e2a7126d1b192647cea6ce93ea633abd20c33b76e4e57",
+    "Documentation/Brand/header-dark.png": "bca6ee19a77e5561f13d5577a5c9df0a8683b721c552bc0f1e463e79ca1e9883",
+    ".github/brand/social.png": "01d23132970544b6cb6c8ce63beba18dcd391c378008e43546f209d46f32dc8f"
+  },
+  "entries": {
+    "README.md": [
+      "Homebrew Tap",
+      "Documentation/Brand/header-light.png",
+      "Documentation/Brand/header-dark.png"
+    ]
+  }
+}
