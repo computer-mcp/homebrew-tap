@@ -2,7 +2,7 @@ class AppleCli < Formula
   desc "Automate Apple apps using CLI and MCP"
   homepage "https://github.com/computer-mcp/apple-cli"
   url "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.3/apple-cli-0.1.0-alpha.3-macos-arm64.tar.gz"
-  sha256 "720f714ba4bcc22217d32eb2a3012eb4b72b6694a885f07ee0eaa753a64afb07"
+  sha256 "b7be69f407be64c512d1ed29aa3b796329d19b6e33aa3786966a1957f7c0cc32"
   license "Apache-2.0"
 
   depends_on arch: :arm64

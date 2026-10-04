@@ -1,24 +1,24 @@
 {
-  "acceptance_run": "https://github.com/computer-mcp/apple-cli/actions/runs/36892691006",
+  "acceptance_run": "https://github.com/computer-mcp/apple-cli/actions/runs/37211982536",
   "allow_prereleases": true,
   "assets": {
     "apple-cli-0.1.0-alpha.3-macos-arm64.provenance.json": {
-      "sha256": "435c3081d8f3f440361ef380e720a9fb6a9403e8508ea075c4c51c7df564d70e",
+      "sha256": "fd0aea02f2e738aefbf1c5df4e6ca9da3598f0b4975b7257b3b9c42e41494406",
       "size": 18043,
       "url": "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.3/apple-cli-0.1.0-alpha.3-macos-arm64.provenance.json"
     },
     "apple-cli-0.1.0-alpha.3-macos-arm64.tar.gz": {
-      "sha256": "720f714ba4bcc22217d32eb2a3012eb4b72b6694a885f07ee0eaa753a64afb07",
-      "size": 16510953,
+      "sha256": "b7be69f407be64c512d1ed29aa3b796329d19b6e33aa3786966a1957f7c0cc32",
+      "size": 16510960,
       "url": "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.3/apple-cli-0.1.0-alpha.3-macos-arm64.tar.gz"
     },
     "apple-cli-0.1.0-alpha.3-macos-arm64.tar.gz.sha256": {
-      "sha256": "8f9583a8e3aa26ed2f9987235e0e72d0aadb3690ecdbee5dd59e39210c50b670",
+      "sha256": "08bdf5a104c3ac50f2b24a06d8c2abd94ef3ef5bab91ec43cc8ba0d7d2251cec",
       "size": 109,
       "url": "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.3/apple-cli-0.1.0-alpha.3-macos-arm64.tar.gz.sha256"
     },
     "apple-cli-0.1.0-alpha.3-macos-arm64.verification.json": {
-      "sha256": "adf20aa1c46b907de6d7def2f27d1a665029c5159ce9066fe2d9a004d744ecf3",
+      "sha256": "cba95f9c5267c5144a7c59f7aef1df6ad77b5db6bbd30c7446b8b95bff389cde",
       "size": 1685,
       "url": "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.3/apple-cli-0.1.0-alpha.3-macos-arm64.verification.json"
     }
@@ -41,9 +41,9 @@
   "macos_symbol": "golden_gate",
   "minimum_macos": "27",
   "name": "apple-cli",
-  "release_id": 401169966,
+  "release_id": 403082325,
   "repository": "computer-mcp/apple-cli",
-  "source_commit": "f362fcc35a3e3eaf93102f19600a8d17d18e6db8",
+  "source_commit": "de910f0acd1c7937a9203a19bf25b94462402e1a",
   "tag": "v0.1.0-alpha.3",
   "version": "0.1.0-alpha.3"
 }
