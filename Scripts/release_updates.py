@@ -185,27 +185,32 @@ def prepare(output):
     print(f"Validated {len(updates)} distribution updates")
 
 
+def distribution_path(candidate):
+    return ROOT / ("Formula" if candidate["kind"] == "formula" else "Casks") / f"{candidate['name']}.rb"
+
+
+def render(candidate):
+    name, kind = candidate["name"], candidate["kind"]
+    version_key(candidate["version"])
+    require((name, kind) in {("apple-cli", "formula"), ("computer-mcp", "cask")}, "Unreviewed distribution")
+    require(re.fullmatch(r"[a-z][a-z0-9_]*", candidate["macos_symbol"]), "Invalid macOS symbol")
+    record = candidate["assets"][asset_names(name, candidate["version"])[0]]
+    text = (ROOT / "Scripts/templates" / f"{name}.rb.in").read_text()
+    for key, value in {"URL": record["url"], "VERSION": candidate["version"], "SHA256": record["sha256"], "MACOS_SYMBOL": candidate["macos_symbol"]}.items():
+        text = text.replace(f"@{key}@", value)
+    require(re.search(r"@[A-Z0-9_]+@", text) is None, "Unrendered template field")
+    return text
+
+
 def stage(directory):
     for candidate in json.loads((directory / "updates.json").read_text()):
-        name, kind = candidate["name"], candidate["kind"]
-        version_key(candidate["version"])
-        require((name, kind) in {( "apple-cli", "formula"), ("computer-mcp", "cask")}, "Unreviewed distribution")
-        require(re.fullmatch(r"[a-z][a-z0-9_]*", candidate["macos_symbol"]), "Invalid macOS symbol")
+        text = render(candidate)
         floor = subprocess.check_output(["brew", "ruby", "-e", 'require "macos_version"; puts MacOSVersion::SYMBOLS.fetch(ARGV.fetch(0).to_sym)', "--", candidate["macos_symbol"]], text=True, timeout=30).strip()
         require(floor.split(".")[0] == candidate["minimum_macos"], "Homebrew platform floor does not match its reviewed policy")
-        asset = asset_names(name, candidate["version"])[0]
-        record = candidate["assets"][asset]
-        destination = ROOT / ("Formula" if kind == "formula" else "Casks") / f"{name}.rb"
+        destination = distribution_path(candidate)
         destination.parent.mkdir(parents=True, exist_ok=True)
-        if destination.exists():
-            subprocess.run(["brew", "trust", f"--{kind}", f"computer-mcp/tap/{name}"], check=True, timeout=30)
-            subprocess.run(["brew", f"bump-{kind}-pr", "--write-only", "--no-audit", f"--version={candidate['version']}", f"--url={record['url']}", f"--sha256={record['sha256']}", f"computer-mcp/tap/{name}"], check=True, timeout=600)
-        else:
-            template = (ROOT / "Scripts/templates" / f"{name}.rb.in").read_text()
-            for key, value in {"URL": record["url"], "VERSION": candidate["version"], "SHA256": record["sha256"], "MACOS_SYMBOL": candidate["macos_symbol"]}.items():
-                template = template.replace(f"@{key}@", value)
-            destination.write_text(template)
-        metadata = ROOT / "Metadata" / f"{name}.json"
+        destination.write_text(text)
+        metadata = ROOT / "Metadata" / f"{candidate['name']}.json"
         metadata.parent.mkdir(parents=True, exist_ok=True)
         metadata.write_text(json.dumps(candidate, indent=2, sort_keys=True) + "\n")
 

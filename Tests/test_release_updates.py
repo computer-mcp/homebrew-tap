@@ -1,5 +1,6 @@
 import copy
 import importlib.util
+import json
 from pathlib import Path
 import unittest
 from unittest.mock import patch
@@ -144,3 +145,27 @@ class AcceptanceAttemptTests(unittest.TestCase):
             with self.subTest(key=key), patch.object(updates, "api") as request, self.assertRaises(ValueError):
                 updates.accepted_release_run(self.repository, {**self.ci, key: value}, self.commit)
             request.assert_not_called()
+
+
+class DistributionRenderTests(unittest.TestCase):
+    def setUp(self):
+        self.metadata = {path.stem: json.loads(path.read_text()) for path in (updates.ROOT / "Metadata").glob("*.json")}
+
+    def test_committed_distributions_match_their_templates(self):
+        for name, candidate in self.metadata.items():
+            with self.subTest(name=name):
+                self.assertEqual(updates.render(candidate), updates.distribution_path(candidate).read_text())
+
+    def test_new_cask_version_keeps_a_versioned_url(self):
+        candidate = copy.deepcopy(self.metadata["computer-mcp"])
+        old, new = candidate["version"], "99.0.0"
+        candidate["version"], candidate["tag"] = new, "v" + new
+        candidate["assets"] = {name.replace(old, new): {**record, "url": record["url"].replace(old, new)} for name, record in candidate["assets"].items()}
+        text = updates.render(candidate)
+        self.assertIn(f'version "{new}"', text)
+        self.assertIn('url "https://github.com/computer-mcp/computer-mcp/releases/download/v#{version}/Computer-MCP-#{version}-universal.dmg"', text)
+
+    def test_unreviewed_distribution_is_rejected(self):
+        candidate = {**self.metadata["computer-mcp"], "kind": "formula"}
+        with self.assertRaises(ValueError):
+            updates.render(candidate)

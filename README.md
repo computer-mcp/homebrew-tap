@@ -27,9 +27,9 @@ versions, release artifacts and compatibility contracts.
 
 The release update workflow checks published releases hourly and can also run
 manually. It verifies source tags, artifact checksums and product acceptance
-records, uses `brew bump-formula-pr --write-only` or
-`brew bump-cask-pr --write-only` for existing packages, and runs the official
-`brew test-bot` checks plus installation verification before pushing an update.
+records, renders each package from its reviewed template in
+`Scripts/templates/`, and runs the official `brew test-bot` checks plus
+installation verification before pushing an update.
 Stable releases take precedence; the Apple CLI preview is available while
 there is no stable release. `Metadata/` records the accepted distribution inputs.
 
