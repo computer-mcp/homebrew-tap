@@ -28,10 +28,17 @@ versions, release artifacts and compatibility contracts.
 The release update workflow checks published releases hourly and can also run
 manually. It verifies source tags, artifact checksums and product acceptance
 records, renders each package from its reviewed template in
-`Scripts/templates/`, and runs the official `brew test-bot` checks plus
-installation verification before pushing an update.
+`Scripts/templates/`, and proposes the result as a pull request from
+`automation/distribution-updates` with auto-merge enabled. Pull requests
+created by the workflow token do not start other workflows, so it dispatches
+the official `brew test-bot` checks and installation verification on that
+branch; the pull request merges once they pass.
 Stable releases take precedence; the Apple CLI preview is available while
 there is no stable release. `Metadata/` records the accepted distribution inputs.
+
+The `master` ruleset requires a pull request, both `test-bot` checks and signed
+commits, and blocks force pushes and deletion, with no bypass. Pull requests
+are squash-merged, which GitHub signs.
 
 The packages install original release files. CI verifies executable signatures
 and bytes for Apple CLI, and the app version, signature and notarization for
