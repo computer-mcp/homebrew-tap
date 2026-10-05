@@ -35,7 +35,7 @@ manually. It verifies source tags, artifact checksums and product acceptance
 records, renders each package from its reviewed template in
 `Scripts/templates/`, and proposes the result as a pull request from
 `automation/distribution-updates` with auto-merge enabled. It acts through the
-organization's Computer MCP Automation GitHub App, installed only on this tap
+organization's Computer MCP Updater GitHub App, installed only on this tap
 and the website with Contents and Pull requests write access; its client ID
 and private key are the `AUTOMATION_APP_CLIENT_ID` variable and
 `AUTOMATION_APP_PRIVATE_KEY` secret. GitHub creates the proposal commit through
