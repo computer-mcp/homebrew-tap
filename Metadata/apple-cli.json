@@ -1,36 +1,36 @@
 {
-  "acceptance_run": "https://github.com/computer-mcp/apple-cli/actions/runs/37211982536",
+  "acceptance_run": "https://github.com/computer-mcp/apple-cli/actions/runs/37271746190",
   "allow_prereleases": true,
   "assets": {
-    "apple-cli-0.1.0-alpha.3-macos-arm64.provenance.json": {
-      "sha256": "fd0aea02f2e738aefbf1c5df4e6ca9da3598f0b4975b7257b3b9c42e41494406",
-      "size": 18043,
-      "url": "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.3/apple-cli-0.1.0-alpha.3-macos-arm64.provenance.json"
+    "apple-cli-0.1.0-alpha.4-macos-arm64.provenance.json": {
+      "sha256": "b9ef7186798d1d3255ea3326c4dd3cbd61fcdaa13f1764b685584f67845c7ce8",
+      "size": 18225,
+      "url": "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.4/apple-cli-0.1.0-alpha.4-macos-arm64.provenance.json"
     },
-    "apple-cli-0.1.0-alpha.3-macos-arm64.tar.gz": {
-      "sha256": "b7be69f407be64c512d1ed29aa3b796329d19b6e33aa3786966a1957f7c0cc32",
-      "size": 16510960,
-      "url": "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.3/apple-cli-0.1.0-alpha.3-macos-arm64.tar.gz"
+    "apple-cli-0.1.0-alpha.4-macos-arm64.tar.gz": {
+      "sha256": "12b0550c655af2dd30699a89a032d9a9b7b134fa6a7938844fd333a413c49f4f",
+      "size": 17503649,
+      "url": "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.4/apple-cli-0.1.0-alpha.4-macos-arm64.tar.gz"
     },
-    "apple-cli-0.1.0-alpha.3-macos-arm64.tar.gz.sha256": {
-      "sha256": "08bdf5a104c3ac50f2b24a06d8c2abd94ef3ef5bab91ec43cc8ba0d7d2251cec",
+    "apple-cli-0.1.0-alpha.4-macos-arm64.tar.gz.sha256": {
+      "sha256": "66a3674ef6c46cbe695fb00957eef0c02893ec91495b8357093fdebb4af42e44",
       "size": 109,
-      "url": "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.3/apple-cli-0.1.0-alpha.3-macos-arm64.tar.gz.sha256"
+      "url": "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.4/apple-cli-0.1.0-alpha.4-macos-arm64.tar.gz.sha256"
     },
-    "apple-cli-0.1.0-alpha.3-macos-arm64.verification.json": {
-      "sha256": "cba95f9c5267c5144a7c59f7aef1df6ad77b5db6bbd30c7446b8b95bff389cde",
+    "apple-cli-0.1.0-alpha.4-macos-arm64.verification.json": {
+      "sha256": "acc122512c80acee7dfc8eb368954c6519d7458aa266ff518e47ca93475940dc",
       "size": 1685,
-      "url": "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.3/apple-cli-0.1.0-alpha.3-macos-arm64.verification.json"
+      "url": "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.4/apple-cli-0.1.0-alpha.4-macos-arm64.verification.json"
     }
   },
   "binaries": [
     {
       "path": "bin/apple",
-      "sha256": "06521741d78d09eb990db76cd6472f9463dbe4e8fd9fd5a4f242d9094ce5a170"
+      "sha256": "0aea4d2b9e9611fc128e301a1b623766743e834b464b4d307447262a0277d4ab"
     },
     {
       "path": "bin/apple-cli-mcp",
-      "sha256": "f9ba453f4aca11bab21893d6aa283631201b74780d693e2443ff95349e4b0798"
+      "sha256": "7f393f9a5b9873cbe2144227f224906c96a215c0f1c4d6103bc115cec24935ad"
     },
     {
       "path": "bin/libswiftCompatibilitySpan.dylib",
@@ -41,9 +41,9 @@
   "macos_symbol": "golden_gate",
   "minimum_macos": "27",
   "name": "apple-cli",
-  "release_id": 403082325,
+  "release_id": 403435080,
   "repository": "computer-mcp/apple-cli",
-  "source_commit": "de910f0acd1c7937a9203a19bf25b94462402e1a",
-  "tag": "v0.1.0-alpha.3",
-  "version": "0.1.0-alpha.3"
+  "source_commit": "6ade5853153deaf158aa754f495d91606b6b5173",
+  "tag": "v0.1.0-alpha.4",
+  "version": "0.1.0-alpha.4"
 }
