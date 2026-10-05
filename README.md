@@ -34,13 +34,17 @@ The release update workflow checks published releases hourly and can also run
 manually. It verifies source tags, artifact checksums and product acceptance
 records, renders each package from its reviewed template in
 `Scripts/templates/`, and proposes the result as a pull request from
-`automation/distribution-updates` with auto-merge enabled. GitHub creates the
-proposal commit through its API with the workflow token, so the commit is
-signed; the workflow requires GitHub's tree to match the staged files and the
-commit to be verified. Pull requests
-created by the workflow token do not start other workflows, so it dispatches
-the official `brew test-bot` checks and installation verification on that
-branch; the pull request merges once they pass.
+`automation/distribution-updates` with auto-merge enabled. It acts through the
+organization's Computer MCP Automation GitHub App, installed only on this tap
+and the website with Contents and Pull requests write access; its client ID
+and private key are the `AUTOMATION_APP_CLIENT_ID` variable and
+`AUTOMATION_APP_PRIVATE_KEY` secret. GitHub creates the proposal commit through
+its API with the App's installation token, so the commit is signed; the
+workflow requires GitHub's tree to match the staged files and the commit to be
+verified. Because the App opens the pull request, the official `brew test-bot`
+checks and installation verification run on it like any other pull request,
+and it merges once they pass. Pull requests opened with the workflow token
+would instead wait for manual approval before their checks run.
 Stable releases take precedence; the Apple CLI preview is available while
 there is no stable release. `Metadata/` records the accepted distribution inputs.
 
