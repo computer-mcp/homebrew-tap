@@ -1,6 +1,6 @@
 cask "computer-mcp" do
-  version "1.3.2"
-  sha256 "b60df082bf597bef2168353e42cc568f8606434822ca820acc6a80cb0f909e02"
+  version "1.3.3"
+  sha256 "7e2b268f65b17eccc0c327553f525e23609b042e0b6c406038eda0f22c4321fd"
 
   url "https://github.com/computer-mcp/computer-mcp/releases/download/v#{version}/Computer-MCP-#{version}-universal.dmg"
   name "Computer MCP"
