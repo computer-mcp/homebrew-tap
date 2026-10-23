@@ -4,6 +4,7 @@ on:
   push:
     branches: [master]
   pull_request:
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
   workflow_call:
     inputs:
@@ -17,6 +18,10 @@ permissions:
   checks: read
   contents: read
   pull-requests: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ inputs.candidate-artifact == '' }}
 
 jobs:
   test-bot:
@@ -35,6 +40,7 @@ jobs:
         with:
           token: ${{ github.token }}
       - name: Cache Homebrew Bundler RubyGems
+        if: inputs.candidate-artifact == ''
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ steps.set-up-homebrew.outputs.gems-path }}
@@ -75,3 +81,10 @@ jobs:
           brew audit --cask --strict --online computer-mcp/tap/computer-mcp
           brew install --cask --appdir="$RUNNER_TEMP/homebrew-apps" computer-mcp/tap/computer-mcp
           python3 -B Scripts/verify_installation.py computer-mcp --appdir "$RUNNER_TEMP/homebrew-apps"
+
+  validate:
+    if: always()
+    needs: [test-bot]
+    uses: computer-mcp/github-workflows/.github/workflows/result.yml@d65bc20504f39c3a30232d67043abeca43d2c7b1
+    with:
+      needs-json: ${{ toJSON(needs) }}
