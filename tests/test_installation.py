@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import patch
 
 
-SPEC = importlib.util.spec_from_file_location("installation", Path(__file__).resolve().parents[1] / "Scripts/verify_installation.py")
+SPEC = importlib.util.spec_from_file_location("installation", Path(__file__).resolve().parents[1] / "scripts/verify_installation.py")
 installation = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(installation)
 
