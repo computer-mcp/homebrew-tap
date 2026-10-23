@@ -4,6 +4,7 @@ on:
     types: [opened, synchronize, reopened, edited]
   push:
     branches: [master]
+  merge_group:
 permissions:
   contents: read
 concurrency:

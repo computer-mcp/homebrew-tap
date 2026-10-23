@@ -23,7 +23,7 @@
 
 ## Overview
 
-The organization's Homebrew tap. It installs the original release files of Computer MCP and Apple
+The organization's Homebrew tap, created with `brew tap-new`. It installs the original release files of Computer MCP and Apple
 CLI, generated from each product's verified releases. Product repositories own their versions,
 release artifacts and compatibility contracts; plugins and Swift SDKs use their own distribution
 channels.
