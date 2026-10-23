@@ -202,7 +202,7 @@ def stage(directory):
             subprocess.run(["brew", "trust", f"--{kind}", f"computer-mcp/tap/{name}"], check=True, timeout=30)
             subprocess.run(["brew", f"bump-{kind}-pr", "--write-only", "--no-audit", f"--version={candidate['version']}", f"--url={record['url']}", f"--sha256={record['sha256']}", f"computer-mcp/tap/{name}"], check=True, timeout=600)
         else:
-            template = (ROOT / "Scripts/templates" / f"{name}.rb.in").read_text()
+            template = (ROOT / "scripts/templates" / f"{name}.rb.in").read_text()
             for key, value in {"URL": record["url"], "VERSION": candidate["version"], "SHA256": record["sha256"], "MACOS_SYMBOL": candidate["macos_symbol"]}.items():
                 template = template.replace(f"@{key}@", value)
             destination.write_text(template)

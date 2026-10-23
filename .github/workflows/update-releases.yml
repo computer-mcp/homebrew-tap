@@ -24,12 +24,12 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - run: python3 -B -m unittest discover -s Tests
+      - run: python3 -B -m unittest discover -s tests
       - name: Validate published product releases
         id: releases
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 -B Scripts/release_updates.py prepare
+        run: python3 -B scripts/release_updates.py prepare
       - if: steps.releases.outputs.changed == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -54,7 +54,7 @@ jobs:
       - name: Stage Formula and Cask updates
         env:
           HOMEBREW_GITHUB_API_TOKEN: ${{ github.token }}
-        run: python3 -B Scripts/release_updates.py stage
+        run: python3 -B scripts/release_updates.py stage
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: distribution-${{ github.run_id }}-${{ github.run_attempt }}
@@ -91,7 +91,7 @@ jobs:
       - name: Check published asset identities
         env:
           GH_TOKEN: ${{ github.token }}
-        run: python3 -B Scripts/release_updates.py check
+        run: python3 -B scripts/release_updates.py check
       - name: Commit verified distribution files
         run: |
           git config user.name 'github-actions[bot]'

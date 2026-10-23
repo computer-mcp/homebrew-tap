@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import call, patch
 
 
-SPEC = importlib.util.spec_from_file_location("release_updates", Path(__file__).resolve().parents[1] / "Scripts/release_updates.py")
+SPEC = importlib.util.spec_from_file_location("release_updates", Path(__file__).resolve().parents[1] / "scripts/release_updates.py")
 updates = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(updates)
 
@@ -26,7 +26,7 @@ class EmptyDistributionTests(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name)
         self.sources = json.loads((updates.ROOT / "release-sources.json").read_text())
-        self.templates = updates.ROOT / "Scripts/templates"
+        self.templates = updates.ROOT / "scripts/templates"
         (self.root / "release-sources.json").write_text(json.dumps(self.sources))
         root = patch.object(updates, "ROOT", self.root)
         root.start()
@@ -87,7 +87,7 @@ class EmptyDistributionTests(unittest.TestCase):
     def test_first_release_creates_package_and_metadata(self):
         directory = self.root / ".candidate"
         directory.mkdir()
-        templates = self.root / "Scripts/templates"
+        templates = self.root / "scripts/templates"
         templates.mkdir(parents=True)
         for source in self.sources:
             with self.subTest(name=source["name"]):
