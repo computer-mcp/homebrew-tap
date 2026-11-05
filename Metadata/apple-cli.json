@@ -1,0 +1,49 @@
+{
+  "acceptance_run": "https://github.com/computer-mcp/apple-cli/actions/runs/41992216851",
+  "allow_prereleases": true,
+  "assets": {
+    "apple-cli-0.1.0-alpha.5-macos-arm64.provenance.json": {
+      "sha256": "c0c73add2038b7b5bcb9bfdeca2e86b79fa545eaba19b6685988bc42ca2931d3",
+      "size": 18402,
+      "url": "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.5/apple-cli-0.1.0-alpha.5-macos-arm64.provenance.json"
+    },
+    "apple-cli-0.1.0-alpha.5-macos-arm64.tar.gz": {
+      "sha256": "0e6a46649e191c75028979b532e581f99867ed802f2d7a408f96d242c2740594",
+      "size": 17463064,
+      "url": "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.5/apple-cli-0.1.0-alpha.5-macos-arm64.tar.gz"
+    },
+    "apple-cli-0.1.0-alpha.5-macos-arm64.tar.gz.sha256": {
+      "sha256": "66fcacd5d7233fe4ec1479dc5a6cc7660828b9c982a1fe356749b61f8f7d38f0",
+      "size": 109,
+      "url": "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.5/apple-cli-0.1.0-alpha.5-macos-arm64.tar.gz.sha256"
+    },
+    "apple-cli-0.1.0-alpha.5-macos-arm64.verification.json": {
+      "sha256": "d0200343be378336794ebe75737ea2b761c464f7c2918fbd90e3765775c96798",
+      "size": 1687,
+      "url": "https://github.com/computer-mcp/apple-cli/releases/download/v0.1.0-alpha.5/apple-cli-0.1.0-alpha.5-macos-arm64.verification.json"
+    }
+  },
+  "binaries": [
+    {
+      "path": "bin/apple",
+      "sha256": "f1f286819172738146db3967a91ec6e583a804fa53a1dc44842be4fb7f4f640c"
+    },
+    {
+      "path": "bin/apple-cli-mcp",
+      "sha256": "079153fdb00351471f1d5c4323a71f70f7a9b5f9721cc2f23fe26bdc4f7f830d"
+    },
+    {
+      "path": "bin/libswiftCompatibilitySpan.dylib",
+      "sha256": "e633f9014ad3b49f5f2f7a1c178471620f7e17b855899c3552832d7806d41cd9"
+    }
+  ],
+  "kind": "formula",
+  "macos_symbol": "golden_gate",
+  "minimum_macos": "27",
+  "name": "apple-cli",
+  "release_id": 434942929,
+  "repository": "computer-mcp/apple-cli",
+  "source_commit": "f7b1d0bf9c8855b055a85665f19f4831e3eb4864",
+  "tag": "v0.1.0-alpha.5",
+  "version": "0.1.0-alpha.5"
+}
