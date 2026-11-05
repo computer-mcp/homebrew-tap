@@ -1,3 +1,4 @@
+import base64
 import copy
 from contextlib import redirect_stdout
 import importlib.util
@@ -18,6 +19,30 @@ SPEC.loader.exec_module(updates)
 
 def release(version, *, draft=False):
     return {"tag_name": "v" + version, "draft": draft, "published_at": None if draft else "2026-01-01T00:00:00Z", "prerelease": "-" in version}
+
+
+class AppleCLISourceVerifierTests(unittest.TestCase):
+    def test_runs_the_verifier_from_the_release_source(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            source = root / "source"
+            verifier = source / "scripts/verify-release"
+            verifier.parent.mkdir(parents=True)
+            verifier.write_text(
+                "import json, sys\n"
+                "from pathlib import Path\n"
+                "directory = Path(sys.argv[sys.argv.index('--directory') + 1])\n"
+                "(directory / 'invocation.json').write_text(json.dumps(sys.argv[1:]))\n"
+            )
+            directory = root / "assets"
+            directory.mkdir()
+
+            updates.verify_apple_cli_source(source, directory, "v0.1.0-alpha.5")
+
+            self.assertEqual(json.loads((directory / "invocation.json").read_text()), [
+                "--directory", str(directory), "--source", str(source), "--tag", "v0.1.0-alpha.5",
+                "--require-verification",
+            ])
 
 
 class EmptyDistributionTests(unittest.TestCase):
@@ -238,3 +263,131 @@ class AcceptanceAttemptTests(unittest.TestCase):
             with self.subTest(key=key), patch.object(updates, "api") as request, self.assertRaises(ValueError):
                 updates.accepted_release_run(self.repository, {**self.ci, key: value}, self.commit)
             request.assert_not_called()
+
+
+class ProposalTests(unittest.TestCase):
+    BRANCH = "automation/distribution-updates"
+
+    def setUp(self):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        base = Path(temporary.name)
+        self.root, self.remote = base / "tap", base / "remote.git"
+        self.git(base, "init", "--quiet", "--bare", str(self.remote))
+        self.git(base, "init", "--quiet", "-b", "master", str(self.root))
+        self.git(self.root, "remote", "add", "origin", str(self.remote))
+        self.write_metadata("1.0.0")
+        (self.root / "Formula").mkdir()
+        (self.root / "Formula/apple-cli.rb").write_text("1.0.0\n")
+        (self.root / "Formula/retired.rb").write_text("retired\n")
+        self.git(self.root, "add", ".")
+        self.git(self.root, "commit", "--quiet", "-m", "Fixture")
+        self.git(self.root, "push", "--quiet", "origin", "master")
+        self.head = self.git(self.root, "rev-parse", "HEAD")
+        self.output = base / "github-output"
+        self.signed, self.verified, self.calls = set(), True, []
+        for patcher in (patch.object(updates, "api", self.read), patch.object(updates, "write", self.write),
+                        patch.dict(os.environ, {"GITHUB_REPOSITORY": "computer-mcp/homebrew-tap", "GITHUB_OUTPUT": str(self.output)})):
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+    def git(self, root, *arguments, data=None, environment=None):
+        command = ["git", "-C", str(root), "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                   "-c", "commit.gpgsign=false", *arguments]
+        return subprocess.run(command, input=data, check=True, capture_output=True, timeout=10, env=environment).stdout.decode().strip()
+
+    def write_metadata(self, version):
+        (self.root / "Metadata").mkdir(exist_ok=True)
+        (self.root / "Metadata/apple-cli.json").write_text(json.dumps({"name": "apple-cli", "version": version}) + "\n")
+
+    def stage_update(self):
+        self.write_metadata("1.1.0")
+        (self.root / "Formula/apple-cli.rb").write_text("1.1.0\n")
+        (self.root / "Formula/retired.rb").unlink()
+        self.git(self.root, "add", "-A")
+
+    def proposal(self):
+        return self.git(self.remote, "for-each-ref", "--format=%(objectname)", f"refs/heads/{self.BRANCH}")
+
+    def commit(self, sha):
+        tree, *parents = self.git(self.remote, "show", "-s", "--format=%T %P", sha).split()
+        return {"sha": sha, "tree": {"sha": tree}, "parents": [{"sha": parent} for parent in parents],
+                "verification": {"verified": sha in self.signed}}
+
+    def read(self, endpoint):
+        self.assertTrue(endpoint.startswith("repos/computer-mcp/homebrew-tap/git/commits/"))
+        return self.commit(endpoint.rsplit("/", 1)[1])
+
+    def write(self, method, endpoint, body):
+        operation = (method, endpoint.removeprefix("repos/computer-mcp/homebrew-tap/"))
+        self.calls.append(operation)
+        if operation == ("POST", "git/blobs"):
+            return {"sha": self.git(self.remote, "hash-object", "-w", "--stdin", data=base64.b64decode(body["content"]))}
+        if operation == ("POST", "git/trees"):
+            with tempfile.TemporaryDirectory() as directory:
+                environment = {**os.environ, "GIT_INDEX_FILE": str(Path(directory) / "index")}
+                self.git(self.remote, "read-tree", body["base_tree"], environment=environment)
+                lines = [f"0 {'0' * 40}\t{entry['path']}" if entry["sha"] is None else f"{entry['mode']} {entry['sha']}\t{entry['path']}"
+                         for entry in body["tree"]]
+                self.git(self.remote, "update-index", "--index-info", data="".join(line + "\n" for line in lines).encode(), environment=environment)
+                return {"sha": self.git(self.remote, "write-tree", environment=environment)}
+        if operation == ("POST", "git/commits"):
+            parents = [argument for parent in body["parents"] for argument in ("-p", parent)]
+            sha = self.git(self.remote, "commit-tree", body["tree"], *parents, "-m", body["message"])
+            if self.verified:
+                self.signed.add(sha)
+            return self.commit(sha)
+        if operation == ("POST", "git/refs"):
+            self.git(self.remote, "update-ref", body["ref"], body["sha"], "0" * 40)
+            return {}
+        if operation == ("PATCH", f"git/refs/heads/{self.BRANCH}") and body["force"] is True:
+            self.git(self.remote, "update-ref", f"refs/heads/{self.BRANCH}", body["sha"])
+            return {}
+        raise AssertionError(f"Unexpected API request {operation}")
+
+    def test_staged_distribution_becomes_a_signed_proposal(self):
+        self.stage_update()
+        tree = self.git(self.root, "write-tree")
+        commit = updates.propose(self.BRANCH, self.root)
+        self.assertEqual(self.proposal(), commit)
+        self.assertIn(commit, self.signed)
+        self.assertEqual(self.git(self.remote, "show", "-s", "--format=%T %P%n%s", commit), f"{tree} {self.head}\nchore: update apple-cli to 1.1.0")
+        self.assertEqual(self.git(self.root, "rev-parse", "HEAD"), self.head)
+
+    def test_unsigned_proposal_is_not_published(self):
+        self.stage_update()
+        self.verified = False
+        with self.assertRaisesRegex(ValueError, "sign"):
+            updates.propose(self.BRANCH, self.root)
+        self.assertEqual(self.proposal(), "")
+
+    def test_identical_signed_proposal_is_not_recreated(self):
+        self.stage_update()
+        commit = updates.propose(self.BRANCH, self.root)
+        self.output.unlink()
+        self.calls.clear()
+        self.assertEqual(updates.propose(self.BRANCH, self.root), commit)
+        self.assertEqual((self.proposal(), self.calls), (commit, []))
+        self.assertEqual(self.output.read_text(), "title=chore: update apple-cli to 1.1.0\n")
+
+    def test_unsigned_proposal_with_the_same_files_is_replaced(self):
+        self.stage_update()
+        unsigned = self.git(self.root, "commit-tree", self.git(self.root, "write-tree"), "-p", self.head, "-m", "Unsigned")
+        self.git(self.root, "push", "--quiet", "origin", f"{unsigned}:refs/heads/{self.BRANCH}")
+        commit = updates.propose(self.BRANCH, self.root)
+        self.assertNotEqual(commit, unsigned)
+        self.assertEqual(self.proposal(), commit)
+        self.assertIn(("PATCH", f"git/refs/heads/{self.BRANCH}"), self.calls)
+
+    def test_only_distribution_files_are_proposed(self):
+        self.stage_update()
+        (self.root / "README.md").write_text("Unreviewed\n")
+        self.git(self.root, "add", "README.md")
+        with self.assertRaisesRegex(ValueError, "distribution files"):
+            updates.propose(self.BRANCH, self.root)
+        self.assertEqual((self.proposal(), self.calls), ("", []))
+
+    def test_unchanged_distribution_makes_no_request(self):
+        self.assertIsNone(updates.propose(self.BRANCH, self.root))
+        self.assertEqual(self.calls, [])
+        self.assertFalse(self.output.exists())

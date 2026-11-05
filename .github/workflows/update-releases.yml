@@ -75,15 +75,19 @@ jobs:
       contents: read
       pull-requests: read
 
-  publish:
+  propose:
     needs: [stage, verify]
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
-      contents: write
       actions: read
+      contents: read
+    env:
+      BRANCH: automation/distribution-updates
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: distribution-${{ github.run_id }}-${{ github.run_attempt }}
@@ -92,13 +96,37 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 -B scripts/release_updates.py check
-      - name: Commit verified distribution files
+      - name: Create automation token
+        id: automation
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        with:
+          client-id: ${{ vars.AUTOMATION_APP_CLIENT_ID }}
+          private-key: ${{ secrets.AUTOMATION_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+      - name: Propose verified distribution files
+        id: proposal
+        env:
+          GH_TOKEN: ${{ steps.automation.outputs.token }}
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           for package_directory in Formula Casks Metadata; do
             if [[ -d "$package_directory" ]]; then git add -- "$package_directory"; fi
           done
-          if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'Update verified Homebrew distributions'
-          git push origin HEAD:master
+          python3 -B scripts/release_updates.py propose --branch "$BRANCH"
+      - name: Merge the proposal once its checks pass
+        if: steps.proposal.outputs.title != ''
+        env:
+          GH_TOKEN: ${{ steps.automation.outputs.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TITLE: ${{ steps.proposal.outputs.title }}
+        run: |
+          body="Generated from published releases by [the release update workflow]($RUN_URL). Source tags, artifact digests, acceptance records and published identities were verified before this proposal. The pull request merges automatically once the required Homebrew checks pass."
+          number=$(gh pr list --head "$BRANCH" --base master --state open --json number --jq '.[0].number // empty')
+          if [[ -n "$number" ]]; then
+            gh pr edit "$number" --title "$TITLE" --body "$body"
+          else
+            number=$(gh pr create --head "$BRANCH" --base master --title "$TITLE" --body "$body" | sed 's#.*/##')
+          fi
+          if [[ "$(gh pr view "$number" --json autoMergeRequest --jq '.autoMergeRequest == null')" == true ]]; then
+            gh pr merge "$number" --auto --squash
+          fi
