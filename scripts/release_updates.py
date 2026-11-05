@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Validate product release inputs and stage Homebrew distribution updates."""
+"""Validate product releases, stage Homebrew updates, and propose them."""
 
 import argparse
+import base64
 import hashlib
 import json
 import os
@@ -29,6 +30,15 @@ def version_key(version):
 
 def api(endpoint):
     return json.loads(subprocess.check_output(["gh", "api", endpoint], text=True, timeout=120))
+
+
+def write(method, endpoint, body):
+    return json.loads(subprocess.check_output(["gh", "api", "--method", method, endpoint, "--input", "-"],
+                                              input=json.dumps(body), text=True, timeout=120))
+
+
+def git(root, *arguments):
+    return subprocess.check_output(["git", "-C", str(root), *arguments], timeout=60)
 
 
 def digest(file):
@@ -111,6 +121,13 @@ def accepted_release_run(repository, ci, commit):
     return run
 
 
+def verify_apple_cli_source(source, directory, tag):
+    verifier = source / "scripts/verify-release"
+    require(verifier.is_file(), "Source release verifier is unavailable")
+    subprocess.run(["python3", "-B", str(verifier), "--directory", str(directory), "--source", str(source),
+                    "--tag", tag, "--require-verification"], check=True, timeout=180)
+
+
 def validate_apple_cli(candidate, directory):
     repository, version, tag = candidate["repository"], candidate["version"], candidate["tag"]
     package = f"apple-cli-{version}-macos-arm64"
@@ -122,7 +139,7 @@ def validate_apple_cli(candidate, directory):
         source = Path(temporary) / "source"
         subprocess.run(["git", "clone", "--quiet", "--depth", "1", "--branch", tag, f"https://github.com/{repository}.git", str(source)], check=True, timeout=180)
         require(subprocess.check_output(["git", "-C", str(source), "rev-parse", "HEAD"], text=True).strip() == candidate["source_commit"], "Source tag changed")
-        subprocess.run(["python3", "-B", str(source / "Scripts/verify-release"), "--directory", str(directory), "--source", str(source), "--tag", tag, "--require-verification"], check=True, timeout=180)
+        verify_apple_cli_source(source, directory, tag)
     candidate["binaries"] = [{"path": item["path"], "sha256": item["sha256"]} for item in manifest["binaries"] + manifest["swift_runtime_libraries"]]
     candidate["acceptance_run"] = run["html_url"]
 
@@ -223,15 +240,64 @@ def check():
     print("Published distribution identities match")
 
 
+def propose(branch, root=ROOT):
+    # The default branch requires signed commits; GitHub signs commits made through its API.
+    repository = os.environ["GITHUB_REPOSITORY"]
+    parent = git(root, "rev-parse", "HEAD").decode().strip()
+    base, tree = git(root, "rev-parse", "HEAD^{tree}").decode().strip(), git(root, "write-tree").decode().strip()
+    if tree == base:
+        return None
+    existing = git(root, "ls-remote", "origin", f"refs/heads/{branch}").decode().split()
+    if existing:
+        current = api(f"repos/{repository}/git/commits/{existing[0]}")
+        if current["tree"]["sha"] == tree and current["verification"]["verified"]:
+            print(f"These distribution files are already proposed on {branch}.")
+            return None
+    fields = git(root, "diff-index", "--cached", "--no-renames", "-z", "HEAD").decode().split("\0")
+    changes = [(header[1:].split(), path) for header, path in zip(fields[0:-1:2], fields[1::2])]
+    require(all(path.split("/")[0] in ("Formula", "Casks", "Metadata") for _, path in changes), "Only distribution files may be proposed")
+    entries, updates = [], []
+    for (old_mode, mode, _, blob, status), path in changes:
+        if status == "D":
+            entries.append({"path": path, "mode": old_mode, "type": "blob", "sha": None})
+            continue
+        data = git(root, "cat-file", "blob", blob)
+        created = write("POST", f"repos/{repository}/git/blobs", {"content": base64.b64encode(data).decode(), "encoding": "base64"})
+        require(created["sha"] == blob, "GitHub stored different distribution bytes")
+        entries.append({"path": path, "mode": mode, "type": "blob", "sha": blob})
+        if path.startswith("Metadata/"):
+            metadata = json.loads(data)
+            updates.append(f"{metadata['name']} to {metadata['version']}")
+    require(updates, "A distribution proposal must update its metadata")
+    title = "chore: update " + ", ".join(updates)
+    created = write("POST", f"repos/{repository}/git/trees", {"base_tree": base, "tree": entries})
+    require(created["sha"] == tree, "GitHub built a different distribution tree")
+    commit = write("POST", f"repos/{repository}/git/commits", {"message": title, "tree": tree, "parents": [parent]})
+    require(commit["tree"]["sha"] == tree and [item["sha"] for item in commit["parents"]] == [parent], "GitHub created a different distribution commit")
+    require(commit["verification"]["verified"] is True, "GitHub did not sign the distribution proposal")
+    if existing:
+        write("PATCH", f"repos/{repository}/git/refs/heads/{branch}", {"sha": commit["sha"], "force": True})
+    else:
+        write("POST", f"repos/{repository}/git/refs", {"ref": f"refs/heads/{branch}", "sha": commit["sha"]})
+    if os.environ.get("GITHUB_OUTPUT"):
+        with Path(os.environ["GITHUB_OUTPUT"]).open("a") as stream:
+            stream.write(f"title={title}\n")
+    print(f"Proposed {commit['sha']} on {branch}: {title}")
+    return commit["sha"]
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=("prepare", "stage", "check"))
+    parser.add_argument("mode", choices=("prepare", "stage", "check", "propose"))
     parser.add_argument("--directory", type=Path, default=ROOT / ".candidate")
+    parser.add_argument("--branch", default="automation/distribution-updates")
     options = parser.parse_args()
     if options.mode == "prepare":
         prepare(options.directory.resolve())
     elif options.mode == "stage":
         stage(options.directory.resolve())
+    elif options.mode == "propose":
+        propose(options.branch)
     else:
         check()
 

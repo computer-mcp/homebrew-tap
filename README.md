@@ -37,15 +37,27 @@ channels.
 
 ## Install
 
-Nothing is installable yet. The packages appear once the 0.1.0 product releases are published
-and accepted by the release update workflow.
+The Apple CLI formula requires Apple Silicon and macOS 27. Its published release
+records the macOS version on which the archive was verified:
+
+```sh
+brew install computer-mcp/tap/apple-cli
+```
+
+On Homebrew versions that require trust for third-party formulae, first run
+`brew trust --formula computer-mcp/tap/apple-cli`. The formula installs both
+`apple` and `apple-cli-mcp` from the accepted release archive.
+
+The Computer MCP cask will appear after an eligible product release is
+published and accepted by the release update workflow.
 
 ## How packages are updated
 
 The release update workflow checks published releases every hour and can also run manually. It
 verifies source tags, artifact checksums and product acceptance records, updates existing
 packages with `brew bump-formula-pr --write-only` or `brew bump-cask-pr --write-only`, and runs
-the official `brew test-bot` checks and installation verification before it pushes an update.
+the official `brew test-bot` checks and installation verification before it proposes a signed
+pull request. The proposal merges automatically after its required checks pass.
 Stable releases take precedence; Apple CLI prereleases are eligible while it has no stable
 release. A source with no eligible published release produces no update. `Metadata/` records the
 accepted distribution inputs.
