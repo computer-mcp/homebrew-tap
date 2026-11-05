@@ -284,9 +284,10 @@ class ProposalTests(unittest.TestCase):
         self.git(self.root, "commit", "--quiet", "-m", "Fixture")
         self.git(self.root, "push", "--quiet", "origin", "master")
         self.head = self.git(self.root, "rev-parse", "HEAD")
+        self.output = base / "github-output"
         self.signed, self.verified, self.calls = set(), True, []
         for patcher in (patch.object(updates, "api", self.read), patch.object(updates, "write", self.write),
-                        patch.dict(os.environ, {"GITHUB_REPOSITORY": "computer-mcp/homebrew-tap", "GITHUB_OUTPUT": ""})):
+                        patch.dict(os.environ, {"GITHUB_REPOSITORY": "computer-mcp/homebrew-tap", "GITHUB_OUTPUT": str(self.output)})):
             patcher.start()
             self.addCleanup(patcher.stop)
 
@@ -363,9 +364,11 @@ class ProposalTests(unittest.TestCase):
     def test_identical_signed_proposal_is_not_recreated(self):
         self.stage_update()
         commit = updates.propose(self.BRANCH, self.root)
+        self.output.unlink()
         self.calls.clear()
-        self.assertIsNone(updates.propose(self.BRANCH, self.root))
+        self.assertEqual(updates.propose(self.BRANCH, self.root), commit)
         self.assertEqual((self.proposal(), self.calls), (commit, []))
+        self.assertEqual(self.output.read_text(), "title=chore: update apple-cli to 1.1.0\n")
 
     def test_unsigned_proposal_with_the_same_files_is_replaced(self):
         self.stage_update()
@@ -387,3 +390,4 @@ class ProposalTests(unittest.TestCase):
     def test_unchanged_distribution_makes_no_request(self):
         self.assertIsNone(updates.propose(self.BRANCH, self.root))
         self.assertEqual(self.calls, [])
+        self.assertFalse(self.output.exists())

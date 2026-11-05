@@ -248,42 +248,46 @@ def propose(branch, root=ROOT):
     if tree == base:
         return None
     existing = git(root, "ls-remote", "origin", f"refs/heads/{branch}").decode().split()
-    if existing:
-        current = api(f"repos/{repository}/git/commits/{existing[0]}")
-        if current["tree"]["sha"] == tree and current["verification"]["verified"]:
-            print(f"These distribution files are already proposed on {branch}.")
-            return None
     fields = git(root, "diff-index", "--cached", "--no-renames", "-z", "HEAD").decode().split("\0")
     changes = [(header[1:].split(), path) for header, path in zip(fields[0:-1:2], fields[1::2])]
     require(all(path.split("/")[0] in ("Formula", "Casks", "Metadata") for _, path in changes), "Only distribution files may be proposed")
-    entries, updates = [], []
-    for (old_mode, mode, _, blob, status), path in changes:
-        if status == "D":
-            entries.append({"path": path, "mode": old_mode, "type": "blob", "sha": None})
-            continue
-        data = git(root, "cat-file", "blob", blob)
-        created = write("POST", f"repos/{repository}/git/blobs", {"content": base64.b64encode(data).decode(), "encoding": "base64"})
-        require(created["sha"] == blob, "GitHub stored different distribution bytes")
-        entries.append({"path": path, "mode": mode, "type": "blob", "sha": blob})
-        if path.startswith("Metadata/"):
-            metadata = json.loads(data)
+    updates = []
+    for (_, _, _, blob, status), path in changes:
+        if status != "D" and path.startswith("Metadata/"):
+            metadata = json.loads(git(root, "cat-file", "blob", blob))
             updates.append(f"{metadata['name']} to {metadata['version']}")
     require(updates, "A distribution proposal must update its metadata")
     title = "chore: update " + ", ".join(updates)
-    created = write("POST", f"repos/{repository}/git/trees", {"base_tree": base, "tree": entries})
-    require(created["sha"] == tree, "GitHub built a different distribution tree")
-    commit = write("POST", f"repos/{repository}/git/commits", {"message": title, "tree": tree, "parents": [parent]})
-    require(commit["tree"]["sha"] == tree and [item["sha"] for item in commit["parents"]] == [parent], "GitHub created a different distribution commit")
-    require(commit["verification"]["verified"] is True, "GitHub did not sign the distribution proposal")
+    sha = None
     if existing:
-        write("PATCH", f"repos/{repository}/git/refs/heads/{branch}", {"sha": commit["sha"], "force": True})
-    else:
-        write("POST", f"repos/{repository}/git/refs", {"ref": f"refs/heads/{branch}", "sha": commit["sha"]})
+        current = api(f"repos/{repository}/git/commits/{existing[0]}")
+        if current["tree"]["sha"] == tree and current["verification"]["verified"]:
+            sha = existing[0]
+    if sha is None:
+        entries = []
+        for (old_mode, mode, _, blob, status), path in changes:
+            if status == "D":
+                entries.append({"path": path, "mode": old_mode, "type": "blob", "sha": None})
+                continue
+            data = git(root, "cat-file", "blob", blob)
+            created = write("POST", f"repos/{repository}/git/blobs", {"content": base64.b64encode(data).decode(), "encoding": "base64"})
+            require(created["sha"] == blob, "GitHub stored different distribution bytes")
+            entries.append({"path": path, "mode": mode, "type": "blob", "sha": blob})
+        created = write("POST", f"repos/{repository}/git/trees", {"base_tree": base, "tree": entries})
+        require(created["sha"] == tree, "GitHub built a different distribution tree")
+        commit = write("POST", f"repos/{repository}/git/commits", {"message": title, "tree": tree, "parents": [parent]})
+        require(commit["tree"]["sha"] == tree and [item["sha"] for item in commit["parents"]] == [parent], "GitHub created a different distribution commit")
+        require(commit["verification"]["verified"] is True, "GitHub did not sign the distribution proposal")
+        sha = commit["sha"]
+        if existing:
+            write("PATCH", f"repos/{repository}/git/refs/heads/{branch}", {"sha": sha, "force": True})
+        else:
+            write("POST", f"repos/{repository}/git/refs", {"ref": f"refs/heads/{branch}", "sha": sha})
     if os.environ.get("GITHUB_OUTPUT"):
         with Path(os.environ["GITHUB_OUTPUT"]).open("a") as stream:
             stream.write(f"title={title}\n")
-    print(f"Proposed {commit['sha']} on {branch}: {title}")
-    return commit["sha"]
+    print(f"Signed distribution proposal {sha} on {branch}: {title}")
+    return sha
 
 
 def main():
