@@ -128,5 +128,5 @@ jobs:
             number=$(gh pr create --head "$BRANCH" --base master --title "$TITLE" --body "$body" | sed 's#.*/##')
           fi
           if [[ "$(gh pr view "$number" --json autoMergeRequest --jq '.autoMergeRequest == null')" == true ]]; then
-            gh pr merge "$number" --auto --squash
+            gh pr merge "$number" --auto --squash --subject "$TITLE" --body ''
           fi
