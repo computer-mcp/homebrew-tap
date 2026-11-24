@@ -132,6 +132,38 @@ class EmptyDistributionTests(unittest.TestCase):
                 self.assertIn("0.1.0", package.read_text())
                 self.assertEqual(json.loads((self.root / "Metadata" / f"{name}.json").read_text()), candidate)
 
+    def test_existing_package_bump_uses_the_version_expected_by_homebrew(self):
+        directory = self.root / ".candidate"
+        directory.mkdir()
+        for source in self.sources:
+            name, kind = source["name"], source["kind"]
+            with self.subTest(name=name):
+                version = "0.1.0-alpha.2" if kind == "formula" else "0.1.0"
+                asset = updates.asset_names(name, version)[0]
+                url = f"https://github.com/{source['repository']}/releases/download/v{version}/{asset}"
+                sha256 = "a" * 64
+                candidate = {**source, "version": version, "assets": {asset: {"url": url, "sha256": sha256}}}
+                (directory / "updates.json").write_text(json.dumps([candidate]))
+                package_file = self.root / ("Formula" if kind == "formula" else "Casks") / f"{name}.rb"
+                package_file.parent.mkdir()
+                package_file.touch()
+
+                with patch.object(updates.subprocess, "check_output", return_value=source["minimum_macos"]), patch.object(
+                    updates.subprocess, "run"
+                ) as command:
+                    updates.stage(directory)
+
+                package = f"computer-mcp/tap/{name}"
+                version_args = [] if kind == "formula" else [f"--version={version}"]
+                self.assertEqual(command.call_args_list, [
+                    call(["brew", "trust", f"--{kind}", package], check=True, timeout=30),
+                    call([
+                        "brew", f"bump-{kind}-pr", "--write-only", "--no-audit",
+                        *version_args, f"--url={url}", f"--sha256={sha256}", package,
+                    ], check=True, timeout=600),
+                ])
+                self.assertEqual(json.loads((self.root / "Metadata" / f"{name}.json").read_text()), candidate)
+
 
 class ReleaseSelectionTests(unittest.TestCase):
     def test_draft_cannot_replace_published_version(self):
